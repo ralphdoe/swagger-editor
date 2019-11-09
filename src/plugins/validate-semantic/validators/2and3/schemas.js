@@ -22,3 +22,26 @@ export const validate2And3TypeArrayRequiresItems = () => (system) => {
       }, [])
     })
 }
+
+export const validate2And3DefaultValuesAreWithinEnum = () => (system) => {
+  return system.validateSelectors
+    .allSchemas()
+    .then(nodes => {
+      return nodes.reduce((acc, node) => {
+        const schemaObj = node.node
+        const { type, items } = schemaObj || {}
+        const enumeration = schemaObj.enum
+        const defaultValue = schemaObj.default
+        if (type === "string" && typeof items === "undefined" && enumeration != null && defaultValue != null) {
+          if (!enumeration.includes(defaultValue)) {
+            acc.push({
+              message: "`default` values should be part of the `enum`",
+              path: node.path,
+              level: "error",
+            })
+          }
+        } 
+        return acc
+      }, [])
+    })
+}

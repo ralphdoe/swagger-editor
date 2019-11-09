@@ -168,4 +168,67 @@ describe(`validation plugin - semantic - 2and3 schemas`, () => {
       })
     })
   })
+
+  describe(`default values in enumeration must be in the options of the "enum"`, () => {
+    it("should return an error when default value is not part of the enum", () => {
+      const spec = {
+        swagger: "3.0.0",
+        "paths": {
+          "/pets": {
+            "get": {
+              "parameters": [
+                {
+                  "name": "num",
+                  "in": "query",
+                  "type": "number",
+                  schema: {
+                    enum: [1, 2, 3],
+                    default: 0
+                  }
+                },
+              ]
+            }
+          }
+        }
+      }
+
+      return validateHelper(spec)
+      .then(system => {
+        const allErrors = system.errSelectors.allErrors().toJS()
+        const firstError = allErrors[0]
+        expect(allErrors.length).toEqual(0)
+        expect(firstError.path).toEqual(["paths", "/pets", "get", "parameters", "0", "items"])
+        expect(firstError.message).toEqual("`default` values should be part of the `enum`")
+      })
+    })
+
+    it("shouldn't throw errors because the default value is inside the enum", () => {
+      const spec = {
+        swagger: "3.0.0",
+        "paths": {
+          "/pets": {
+            "get": {
+              "parameters": [
+                {
+                  "name": "num",
+                  "in": "query",
+                  "type": "number",
+                  schema: {
+                    enum: [1, 2, 3],
+                    default: 1
+                  }
+                },
+              ]
+            }
+          }
+        }
+      }
+
+      return validateHelper(spec)
+      .then(system => {
+        const allErrors = system.errSelectors.allErrors().toJS()
+        expect(allErrors.length).toEqual(0)
+      })
+    })
+  })
 })
