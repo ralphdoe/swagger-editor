@@ -45,3 +45,36 @@ export const validate2And3DefaultValuesAreWithinEnum = () => (system) => {
       }, [])
     })
 }
+
+export const validate2And3TypesInDefaultValuesMatchesWithEnum = () => (system) => {
+  return system.validateSelectors
+    .allSchemas()
+    .then(nodes => {
+      return nodes.reduce((acc, node) => {
+        const schemaObj = node.node
+        const { type, items } = schemaObj || {}
+        const enumeration = schemaObj.enum
+        var isValidFormat = true
+        enumeration.forEach(element => {
+          if (type === "array" && (!Array.isArray(element) || element === null)) {
+            isValidFormat = false
+          } else if ((type === "number" || type === "string" || type === "boolean") && !(typeof element === type)) {
+            isValidFormat = false
+          } else if (type === "integer" && !Number.isInteger(element)) {
+            isValidFormat = false
+          } else if (type === "object" && (element == null || !(typeof element === type))) {
+            isValidFormat = false
+          }
+          
+          if (!isValidFormat) {
+            acc.push({
+              message: "enum value should conform to its schema's `type`",
+              path: [...node.path, "items"],
+              level: "warning",
+            });
+          }
+        });
+        return acc
+      }, [])
+    })
+}
